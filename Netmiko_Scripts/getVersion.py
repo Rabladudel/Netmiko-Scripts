@@ -1,14 +1,12 @@
-
-#!/usr/bin/env python3
-
 from netmiko import ConnectHandler
 from getpass import getpass
 
 # Prompt for username and password
 username = input("Username: ")
 password = getpass()
-#device = input("What node are you configuring? ")
 
+#Create file with name 'ipAddresses' and paste there IP addresses of the devices
+#With only one IP address in the file, script will show an error.
 with open('ipAddresses') as f:
     devicesList = f.read().splitlines()
 
@@ -26,13 +24,13 @@ for device in devicesList:
 # establish connection
     ssh = ConnectHandler(**node)
 
+    #Save lines of the outcome as a string 
     shVersionLine = ssh.send_command('sh version').split('\n')
 
     #Take only the name of the interface from the string
     answer = shVersionLine[0].split(' ')[5]
     print("The device with IP address: {} has version: {}".format(device, answer.strip(',')))
 
-#print(ssh.send_command('sh version'))
 # disconnect from node
 ssh.disconnect()
 

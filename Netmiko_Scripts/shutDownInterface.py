@@ -1,14 +1,14 @@
 
-#!/usr/bin/env python3
-
 from netmiko import ConnectHandler
 from getpass import getpass
 
 # Prompt for username and password
 username = input("Username: ")
 password = getpass()
-#device = input("What node are you configuring? ")
 
+
+#Create file with name 'ipAddresses' and paste there IP addresses of the devices
+#With only one IP address in the file, script will show an error.
 with open('ipAddresses') as f:
     devicesList = f.read().splitlines()
 
