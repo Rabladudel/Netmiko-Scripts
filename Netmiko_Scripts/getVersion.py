@@ -15,7 +15,7 @@ with open('ipAddresses') as f:
 # node aka router or switch connection information
 for device in devicesList:
 
-    print('Connecting to: ' + device)
+    print('Connecting to the IP: ' + device)
     node = {
     'device_type': 'cisco_ios',
     'host': device,
