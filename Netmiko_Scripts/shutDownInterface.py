@@ -8,14 +8,13 @@ password = getpass()
 
 
 #Create file with name 'ipAddresses' and paste there IP addresses of the devices
-#With only one IP address in the file, script will show an error.
 with open('ipAddresses') as f:
     devicesList = f.read().splitlines()
 
-# node aka router or switch connection information
+#Information needed to connect to the device
 node = {
 'device_type': 'cisco_ios',
-'host': devicesList[0],
+'host': devicesList[0], #if you use more then one device, remove '[0]'
 'username': username,
 'password': password
 }
@@ -23,35 +22,46 @@ node = {
 # establish connection
 ssh = ConnectHandler(**node)
 
-intStatus = ''
-configuration = []
-
+#Command to execute
 intStatus = ssh.send_command('sh ip int b').split('\n')
 
 for interface in intStatus:
 
+    #Split the whole command into lines
+    interfaceToFilter = interface.split(' ')
+    #Remove '' elements, created by split() method
+    interfaceFiltered = [item for item in interfaceToFilter if item != '']
+
     #Removes first value which is a part of the menu
-    if(interface.split(' ')[0] == 'Interface'):
+    if(interfaceFiltered[0] == 'Interface'):
         continue
     else:
-        #Take only the name of the interface from the string in interface
-        intName = interface.split(' ')[0]
+        #Takes only required information for the script which are: [0] = 'GigabitEthernet' -/- [5] = 'down' [4] = 'administratively'
+        intName = interfaceFiltered[0]
+        intShutManually = interfaceFiltered[4]
+        intStat = interfaceFiltered[5]
 
-        #Checks if the value is not equal Vlan1 or GigabitEthernet0/0 which you don't want to change
-        if(intName != 'Vlan1' and intName != 'GigabitEthernet0/0' ):
+        #Checks if the value is 'administratively' which means, the port is already shutdown
+        if(intShutManually == 'administratively'):
+            print("The interface: {} is already administratively down! No changes were made.".format(intName))
+
+        #Checks if the value is not 'up' which means, the port is down
+        elif(intStat != 'up'): #Can be changed to (intStat == 'down')
             configuration = [
-            'int ' + intName,
-            'shutdown'
+            'int ' + intName, #Command: interface {interface name in the variable}
+            'shutdown' #Command: shutdown 
             ]
 
-            # push configuration set to the node
+            #Executes commands from variable: configuration
             ssh.send_config_set(configuration)
 
-            # inform user of completion
-            print("The interface: {} has been shutdown!".format(intName))
+            #Inform about a state of the interface
+            print("The interface: {} has been shutdown!".format(intName)) 
+        #If any port is neither 'down' or 'administratively down'
         else:
             print("The interface: {} is UP! No changes were made.".format(intName))
 
+#Show information about interfaces after executing the code
 print(ssh.send_command('sh ip int b'))
 # disconnect from node
 ssh.disconnect()
